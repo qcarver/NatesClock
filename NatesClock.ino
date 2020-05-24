@@ -16,7 +16,7 @@ int seconds = 00;
 int minutes = 00;
 int hours = 12;
 int alarmMinutes = 00;
-int alarmHours = 12;
+int alarmHours = 11;
 boolean alarmState = false;
 enum TIME_TO_SET {TIME_OF_DAY, ALARM_TIME};
 
@@ -35,6 +35,7 @@ bool alarmSet = false;
 TIME_TO_SET timeToSet = TIME_OF_DAY;
 
 enum State {
+  IDLE,
   TIME,
   CRAWL_SONGS,
   PLAY_SONG,
@@ -48,38 +49,37 @@ Button leftButton(19), rightButton(18);
 
 void incrementTime() {
   //minimal time for us is a tenth of a second, for button debouncing
-  deciseconds++;
+  ++deciseconds;
+
+  //check the buttons
+  leftButton.debounce();
+  rightButton.debounce();
 
   //if the timer is in use, increment it
-  if (uiTimer != UI_TIMER_UNSET_OR_EXPIRED) {
-    //increment the timer from zero toward it's max
-    ++uiTimer %= MAX_UI_TIMER;
-    //if the UI Timer expires go back to showing the time
-    if (uiTimer = UI_TIMER_UNSET_OR_EXPIRED) {
+  if (uiTimer) {
+    //if we increment the timer from zero toward it's max and rollover
+    if (!(++uiTimer %= MAX_UI_TIMER)) {
+      //times up ..start over
       state = TIME;
     }
   }
 
-  leftButton.debounce();
-  rightButton.debounce();
-
-  if (deciseconds == 10) {
-    deciseconds = 0;
-    seconds ++;
-    if (seconds == 60) {
-      minutes = minutes ++;
-      seconds = 0;
-      if (minutes == 60) {
-        hours += 1;
-        minutes = 0;
-        if (hours == 25) {
-          hours = 1;
+  //maintain the time
+  if (!((++deciseconds) %= 10)) {
+    //every second
+    if (state == IDLE) state = TIME;
+    if (!((++seconds) %= 60)) {
+      //every_minute
+      if (!((++minutes) %= 60)) {
+        //every hour
+        if (!((++hours) %= 24)) {
+          //every day
         }
       }
     }
   }
   //if we have reached the set alarm time, play the last song that was selected
-  if ((hours == alarmHours) && (minutes == alarmMinutes) && (seconds == 0) && (state != PLAY_SONG)){
+  if ((hours == alarmHours) && (minutes == alarmMinutes) && (seconds == 0) && (state != PLAY_SONG)) {
     state = PLAY_SONG;
   }
 }
@@ -89,14 +89,37 @@ void restartUiTimer() {
 }
 
 void setup() {
+  Serial.begin(9600);
   //Timer stuff
-  Timer1.initialize(100000); //initialize timer1, and set period to 1/10th of a second
+  //initialize timer1, and set period to 1/10th of a second.. no idea why i have to double this
+  Timer1.initialize(200000); 
   Timer1.attachInterrupt(incrementTime);
   setupDisplay();
+  Serial.print("*** Nate's Clock, Build: ");Serial.print(__DATE__); Serial.print(__TIME__); Serial.println(" ***");
+}
+
+void printState() {
+  switch (state) {
+    case IDLE:
+      if (!deciseconds && !seconds) {
+        Serial.print(".");
+
+      } break;
+    case TIME: Serial.println("TIME"); break;
+    case CRAWL_SONGS: Serial.println("CRAWL_SONGS"); break;
+    case PLAY_SONG: Serial.println("PLAY_SONG"); break;
+    case SET_ALARM: Serial.println("SET_ALARM"); break;
+    case BLINK_TIME: Serial.println("BLINK_TIME"); break;
+    case CRAWL_MSG: Serial.println("CRAWL_MSG"); break;
+    default: Serial.print("OUT OF STATE! Value is ");Serial.println(state);break;
+  }
 }
 
 void loop() {
+  printState();
   if (state == TIME) {
+    //b/c deciseconds interrupt periodically toggles TIME to IDLE
+    state = IDLE;
     writeTime();
     if (leftButton.isHeld()) state = SET_ALARM;
     else if (rightButton.isHeld()) {
@@ -108,8 +131,8 @@ void loop() {
     else if (rightButton.isPressed()) state = CRAWL_MSG;
   }
   if (state == CRAWL_SONGS) {
-    //crawl_songs
-    state == PLAY_SONG;
+    crawlSongs();
+    state = PLAY_SONG;
   }
   if (state == PLAY_SONG) {
     playSong();
@@ -124,10 +147,10 @@ void loop() {
   }
   if (state == BLINK_TIME) {
     if (leftButton.isPressed()) {
-    if (timeToSet == TIME_OF_DAY) ++hours % 24; else ++alarmHours % 24;
+      if (timeToSet == TIME_OF_DAY) ++hours % 24; else ++alarmHours % 24;
       restartUiTimer();
     } else if (rightButton.isPressed()) {
-    if (timeToSet == TIME_OF_DAY) ++minutes % 24; else ++alarmMinutes % 24;
+      if (timeToSet == TIME_OF_DAY) ++minutes % 24; else ++alarmMinutes % 24;
       restartUiTimer();
     }
   }
@@ -146,7 +169,7 @@ void playSong() {
     // to calculate the {NOTE duration, take one second
     // divided by the {NOTE type.
     //e.g. quarter {NOTE = 1000 / 4, eighth {NOTE = 1000/8, etc.
-    const int duration = getSongNoteDuration(currSongIndex, thisNote)/1000;
+    const int duration = getSongNoteDuration(currSongIndex, thisNote) / 1000;
 
     tone(3, pitch, duration);
     // to distinguish the {NOTEs, set a minimum time between them.
@@ -161,7 +184,7 @@ void playSong() {
 
 void writeTime(int seconds, int minutes, int hours) {
   char sz_time[6] = "     ";
-  if (hours > 19){
+  if (hours > 19) {
     sz_time[0] = '2';
   }
   else if (hours > 9) {
@@ -178,6 +201,7 @@ void writeTime(int seconds, int minutes, int hours) {
   sz_time[3] = getDigitAsChar((minutes - minutes % 10) / 10);
   //firstDigit
   sz_time[4] = getDigitAsChar(minutes % 10);
+  Serial.println(sz_time);
   write5(sz_time);
 }
 
@@ -211,18 +235,12 @@ void writeTickTock() {
 }
 
 //convert a single digit to it's character value (eg 0 becomes '0')
-char getDigitAsChar(int i){
+char getDigitAsChar(int i) {
   //if its not a single digit.. just force it into one
-  i = i%10;
-  
+  i = i % 10;
+
   //ASCII table starts 0-9 at 0x30
   char c = (char)i + 0x30;
-  
+
   return c;
 }
-
-
-
-
-
-

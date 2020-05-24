@@ -1,4 +1,5 @@
 #include "dbButton.h"
+#include "Arduino.h"
 #include <avr/interrupt.h>
 
 //Answers Question: is the button waiting to see if it's really been pressed?
@@ -26,6 +27,7 @@ void Button::debounce() {
     if (debounceCount == 2) {
       //debounceCount = 0;
       buttonState = PRESSED;
+      Serial.println("Button Pressed");
     }
   }
   if ((buttonState == PRESSED)||(buttonState == HELD))
@@ -53,5 +55,3 @@ bool Button::isPressed() {
 bool Button::isHeld() {
   return buttonState == HELD;
 }
-
-
