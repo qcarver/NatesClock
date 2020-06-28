@@ -11,12 +11,12 @@
 bool tick = true;
 const char sz_tick[] = "tick ";
 const char sz_tock[] = "tock ";
-int deciseconds = 0;
-int seconds = 00;
-int minutes = 00;
-int hours = 12;
-int alarmMinutes = 00;
-int alarmHours = 11;
+uint16_t deciseconds = 0;
+uint16_t seconds = 00;
+uint16_t minutes = 00;
+uint16_t hours = 12;
+uint16_t alarmMinutes = 00;
+uint16_t alarmHours = 11;
 boolean alarmState = false;
 enum TIME_TO_SET {TIME_OF_DAY, ALARM_TIME};
 
@@ -25,9 +25,9 @@ enum TIME_TO_SET {TIME_OF_DAY, ALARM_TIME};
 int currSongIndex = 0;
 
 //something to keep track of UI entry time expiration
-const int UI_TIMER_UNSET_OR_EXPIRED = 0;
-const int MAX_UI_TIMER = 40; //40 deciseconds... 4 seconds
-int uiTimer = UI_TIMER_UNSET_OR_EXPIRED;
+const uint16_t UI_TIMER_UNSET_OR_EXPIRED = 0;
+const uint16_t MAX_UI_TIMER = 40; //40 deciseconds... 4 seconds
+uint16_t uiTimer = UI_TIMER_UNSET_OR_EXPIRED;
 
 //Is the alarm set to go off?
 bool alarmSet = false;
@@ -44,20 +44,13 @@ enum State {
   CRAWL_MSG
 } state = TIME;
 
-//oops, I think these are technically analog pins :}
-Button leftButton(19), rightButton(18);
-
 void incrementTime() {
   //minimal time for us is a tenth of a second, for button debouncing
   ++deciseconds;
 
-  //check the buttons
-  leftButton.debounce();
-  rightButton.debounce();
-
   //if the timer is in use, increment it
   if (uiTimer) {
-    //if we increment the timer from zero toward it's max and rollover
+    //if we increment the timesr from zero toward it's max and rollover
     if (!(++uiTimer %= MAX_UI_TIMER)) {
       //times up ..start over
       state = TIME;
@@ -95,7 +88,11 @@ void setup() {
   Timer1.initialize(200000); 
   Timer1.attachInterrupt(incrementTime);
   setupDisplay();
-  Serial.print("*** Nate's Clock, Build: ");Serial.print(__DATE__); Serial.print(__TIME__); Serial.println(" ***");
+  setupButtons();
+  Serial.print("*** Nate's Clock, Build: ");
+  Serial.print(__DATE__); Serial.print(" ");Serial.print(__TIME__); 
+  Serial.println(" ***");
+  state = TIME;
 }
 
 void printState() {
@@ -115,20 +112,24 @@ void printState() {
   }
 }
 
+#define BUTTONS_ONLY
+
 void loop() {
+  Button::print();
+#ifndef BUTTONS_ONLY
   printState();
   if (state == TIME) {
-    //b/c deciseconds interrupt periodically toggles TIME to IDLE
+    //b/c deciseconds interrupt periodicablly toggles TIME to IDLE
     state = IDLE;
     writeTime();
-    if (leftButton.isHeld()) state = SET_ALARM;
-    else if (rightButton.isHeld()) {
+    if (Button::isLHeld()) state = SET_ALARM;
+    else if (Button::isRHeld()) {
       timeToSet = TIME_OF_DAY;
       restartUiTimer();
       state = BLINK_TIME;
     }
-    else if (leftButton.isPressed()) state = CRAWL_SONGS;
-    else if (rightButton.isPressed()) state = CRAWL_MSG;
+    else if (Button::isLPressed()) state = CRAWL_SONGS;
+    else if (Button::isRPressed()) state = CRAWL_MSG;
   }
   if (state == CRAWL_SONGS) {
     crawlSongs();
@@ -146,14 +147,19 @@ void loop() {
     state = BLINK_TIME;
   }
   if (state == BLINK_TIME) {
-    if (leftButton.isPressed()) {
+    if (Button::isLPressed()) {
       if (timeToSet == TIME_OF_DAY) ++hours % 24; else ++alarmHours % 24;
       restartUiTimer();
-    } else if (rightButton.isPressed()) {
+    } else if (Button::isRPressed()) {
       if (timeToSet == TIME_OF_DAY) ++minutes % 24; else ++alarmMinutes % 24;
       restartUiTimer();
     }
   }
+  if (state == CRAWL_MSG){
+    crawlMessage();
+    state = TIME;
+  }
+#endif //BUTTONS_ONLY
 }
 
 int crawlSongs() {
@@ -161,6 +167,12 @@ int crawlSongs() {
   for (int i = 0; i < NUM_SONGS; i++) {
     writeCreeper((byte *)getSongName(i), getSongLength(i), 1);
   }
+}
+
+int crawlMessage() {
+  //crawl song names until either a button is pushed, or we have no more songs
+  writeCreeper((byte *)messages[0], 22, 1);
+
 }
 
 void playSong() {
