@@ -178,6 +178,7 @@ void natesShiftOut(byte val)
 
 
 void writeCreeper(byte* creepMe, int len, int loops) {
+      clearSynchronous();
   for (int j = 0; j < loops; j++) {
     for (int i = 0; i < len ; i ++) {
       sendCharToDigit(creepMe[i % len], 16);
@@ -189,6 +190,7 @@ void writeCreeper(byte* creepMe, int len, int loops) {
       clearSynchronous();
     }
   }
+      clearSynchronous();
 }
 
 byte getCharAsByte(char c) {

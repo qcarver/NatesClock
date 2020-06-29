@@ -32,8 +32,8 @@
 volatile unsigned long highTime, lowTime; //uSecs
 volatile bool rightButtonPinHigh = false, leftButtonPinHigh = false;
 const int interruptPin = 3;
-const int leftButtonPin = 12;
-const int rightButtonPin = 13;
+const int leftButtonPin = A5;
+const int rightButtonPin = A4;
 const int leftLed = 11;
 const int centerLed = 10;
 const int rightLed = 9;

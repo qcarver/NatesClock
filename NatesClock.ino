@@ -112,10 +112,10 @@ void printState() {
   }
 }
 
-#define BUTTONS_ONLY
+//#define BUTTONS_ONLY
 
 void loop() {
-  Button::print();
+  //Button::print();
 #ifndef BUTTONS_ONLY
   printState();
   if (state == TIME) {
@@ -149,13 +149,19 @@ void loop() {
   if (state == BLINK_TIME) {
     if (Button::isLPressed()) {
       if (timeToSet == TIME_OF_DAY) ++hours % 24; else ++alarmHours % 24;
+      Serial.print("Hour: ");Serial.println(hours);
+      writeTime();
       restartUiTimer();
     } else if (Button::isRPressed()) {
       if (timeToSet == TIME_OF_DAY) ++minutes % 24; else ++alarmMinutes % 24;
+      Serial.print("Minute: ");Serial.println(minutes);
+      writeTime();
       restartUiTimer();
     }
+    write5("SetTm");
   }
   if (state == CRAWL_MSG){
+    Serial.println("crawl message");
     crawlMessage();
     state = TIME;
   }
@@ -170,8 +176,11 @@ int crawlSongs() {
 }
 
 int crawlMessage() {
+    const char testMsg[] = "Testy";
+
   //crawl song names until either a button is pushed, or we have no more songs
-  writeCreeper((byte *)messages[0], 22, 1);
+  //writeCreeper((byte *)testMsg, 22, 1);
+  write5(testMsg);
 
 }
 
@@ -195,6 +204,8 @@ void playSong() {
 }
 
 void writeTime(int seconds, int minutes, int hours) {
+  //display in regular not military time
+  hours %= 12;
   char sz_time[6] = "     ";
   if (hours > 19) {
     sz_time[0] = '2';
