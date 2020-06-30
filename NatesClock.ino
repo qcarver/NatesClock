@@ -93,6 +93,10 @@ void setup() {
   Serial.print(__DATE__); Serial.print(" ");Serial.print(__TIME__); 
   Serial.println(" ***");
   state = TIME;
+    pinMode(A0, OUTPUT);
+   Serial.println("playing a tone");
+   tone(8, 104, 1000);
+   noTone(8);
 }
 
 void printState() {
@@ -122,7 +126,11 @@ void loop() {
     //b/c deciseconds interrupt periodicablly toggles TIME to IDLE
     state = IDLE;
     writeTime();
-    if (Button::isLHeld()) state = SET_ALARM;
+    if (Button::isLHeld()) {
+      timeToSet = ALARM_TIME;
+      restartUiTimer();
+      state = SET_ALARM;
+    }
     else if (Button::isRHeld()) {
       timeToSet = TIME_OF_DAY;
       restartUiTimer();
@@ -140,25 +148,15 @@ void loop() {
     //after song, go back to playing time
     state = TIME;
   }
-  if (state == SET_ALARM) {
-    timeToSet = ALARM_TIME;
-    //give user some time to do somethign about the blinking
-    restartUiTimer();
-    state = BLINK_TIME;
-  }
   if (state == BLINK_TIME) {
     if (Button::isLPressed()) {
       if (timeToSet == TIME_OF_DAY) ++hours % 24; else ++alarmHours % 24;
-      Serial.print("Hour: ");Serial.println(hours);
-      writeTime();
       restartUiTimer();
     } else if (Button::isRPressed()) {
       if (timeToSet == TIME_OF_DAY) ++minutes % 24; else ++alarmMinutes % 24;
-      Serial.print("Minute: ");Serial.println(minutes);
-      writeTime();
       restartUiTimer();
     }
-    write5("SetTm");
+    blinkTime();
   }
   if (state == CRAWL_MSG){
     Serial.println("crawl message");
@@ -192,20 +190,20 @@ void playSong() {
     //e.g. quarter {NOTE = 1000 / 4, eighth {NOTE = 1000/8, etc.
     const int duration = getSongNoteDuration(currSongIndex, thisNote) / 1000;
 
-    tone(3, pitch, duration);
+    tone(A0, pitch, duration);
     // to distinguish the {NOTEs, set a minimum time between them.
     // the {NOTE's duration + 30% seems to work well:
     int pauseBetweenNotes = duration * 1.30;
     delay(pauseBetweenNotes);
     //stop the tone playing;
-    noTone(3);
+    noTone(A0);
   }
   state = TIME;
 }
 
 void writeTime(int seconds, int minutes, int hours) {
   //display in regular not military time
-  hours %= 12;
+  hours = ((hours - 1)%12)+1;
   char sz_time[6] = "     ";
   if (hours > 19) {
     sz_time[0] = '2';
@@ -237,13 +235,13 @@ void writeAlarmTime() {
 }
 
 void blinkAlarmTime() {
-  if (deciseconds > 4) writeAlarmTime(); else write5("     ");
+  if ((deciseconds%10)>4)writeAlarmTime(); else write5("     ");
 }
 
-void blinkTime() {
-  if (deciseconds > 4) writeTime(); else write5("     ");
-}
 
+void blinkTime(){
+  if ((deciseconds%10)>4)writeTime();else write5("     ");
+}
 
 //call this method on the Hertz change if you want to alternate tick tock
 void writeTickTock() {
