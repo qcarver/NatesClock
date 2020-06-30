@@ -39,8 +39,8 @@ enum State {
   TIME,
   CRAWL_SONGS,
   PLAY_SONG,
-  SET_ALARM,
-  BLINK_TIME,
+  SET_ALARM,//for editing ALARM on or OFF (alarmState).. NOT for setting ALARM_TIME
+  BLINK_TIME, //for seeting TIME_OF_DAY or ALARM_TIME
   CRAWL_MSG
 } state = TIME;
 
@@ -129,7 +129,7 @@ void loop() {
     if (Button::isLHeld()) {
       timeToSet = ALARM_TIME;
       restartUiTimer();
-      state = SET_ALARM;
+      state = BLINK_TIME;
     }
     else if (Button::isRHeld()) {
       timeToSet = TIME_OF_DAY;
@@ -150,13 +150,13 @@ void loop() {
   }
   if (state == BLINK_TIME) {
     if (Button::isLPressed()) {
-      if (timeToSet == TIME_OF_DAY) ++hours % 24; else ++alarmHours % 24;
+      (timeToSet == TIME_OF_DAY)? ++hours % 24:  ++alarmHours % 24;
       restartUiTimer();
     } else if (Button::isRPressed()) {
-      if (timeToSet == TIME_OF_DAY) ++minutes % 24; else ++alarmMinutes % 24;
+      (timeToSet == TIME_OF_DAY)? ++minutes % 24:  ++alarmMinutes % 24;
       restartUiTimer();
     }
-    blinkTime();
+    (timeToSet == TIME_OF_DAY)? blinkTime(): blinkAlarmTime();
   }
   if (state == CRAWL_MSG){
     Serial.println("crawl message");
