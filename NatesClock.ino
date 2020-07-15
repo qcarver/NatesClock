@@ -8,6 +8,7 @@
 #include "display.h"
 #include "dbButton.h"
 
+#define SPKR_PIN A0
 bool tick = true;
 const char sz_tick[] = "tick ";
 const char sz_tock[] = "tock ";
@@ -19,7 +20,6 @@ uint16_t alarmMinutes = 00;
 uint16_t alarmHours = 11;
 boolean alarmState = false;
 enum TIME_TO_SET {TIME_OF_DAY, ALARM_TIME};
-
 
 //next alarm song, also last song selected
 int currSongIndex = 0;
@@ -83,6 +83,7 @@ void restartUiTimer() {
 
 void setup() {
   Serial.begin(9600);
+
   //Timer stuff
   //initialize timer1, and set period to 1/10th of a second.. no idea why i have to double this
   Timer1.initialize(200000); 
@@ -93,10 +94,9 @@ void setup() {
   Serial.print(__DATE__); Serial.print(" ");Serial.print(__TIME__); 
   Serial.println(" ***");
   state = TIME;
-    pinMode(A0, OUTPUT);
-   Serial.println("playing a tone");
-   tone(8, 104, 1000);
-   noTone(8);
+
+  write5("8ello");
+  playSong();
 }
 
 void printState() {
@@ -183,20 +183,21 @@ int crawlMessage() {
 }
 
 void playSong() {
-  for (int thisNote = 0; thisNote < NUM_SONGS; thisNote++) {
+  for (int thisNote = 0; thisNote < SONG_LEN; thisNote++) {
     const int pitch = getSongNoteFreq(currSongIndex, thisNote);
     // to calculate the {NOTE duration, take one second
     // divided by the {NOTE type.
     //e.g. quarter {NOTE = 1000 / 4, eighth {NOTE = 1000/8, etc.
-    const int duration = getSongNoteDuration(currSongIndex, thisNote) / 1000;
+    const int duration = 1000/ getSongNoteDuration(currSongIndex, thisNote);
 
-    tone(A0, pitch, duration);
+    tone(SPKR_PIN, pitch, duration);
+    Serial.print("tone Hz: ");Serial.print(pitch);Serial.print(" duration: ");Serial.println(duration);
     // to distinguish the {NOTEs, set a minimum time between them.
     // the {NOTE's duration + 30% seems to work well:
     int pauseBetweenNotes = duration * 1.30;
     delay(pauseBetweenNotes);
     //stop the tone playing;
-    noTone(A0);
+    noTone(SPKR_PIN);
   }
   state = TIME;
 }
