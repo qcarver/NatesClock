@@ -98,11 +98,11 @@ void sendCharToDigit(int _char, byte digitValue) {
   //if it's the fifth digit, it's just a parallel write, no flicker, so who cares
   if (digitValue & 16) {
     sendCharToFifthDigit(_char);
-    oldChar[5] = _char;
+    oldChar[4] = _char;
   }
   //this digit (1 through 4) is made by counting anodes up to the value
   else {
-    int whichDigit = 5;
+    int whichDigit = 4;
 
     for (int bits = digitValue; bits > 0; bits >>= 1) {
       whichDigit--;
@@ -177,20 +177,39 @@ void natesShiftOut(byte val)
 }
 
 
-void writeCreeper(byte* creepMe, int len, int loops) {
-      clearSynchronous();
-  for (int j = 0; j < loops; j++) {
-    for (int i = 0; i < len ; i ++) {
-      sendCharToDigit(creepMe[i % len], 16);
-      sendCharToDigit(creepMe[(i + 1) % len], 8);
-      sendCharToDigit(creepMe[(i + 2) % len], 4);
-      sendCharToDigit(creepMe[(i + 3) % len], 2);
-      sendCharToDigit(creepMe[(i + 4) % len], 1);
-      delay(200);
-      clearSynchronous();
+/*v
+void writeCreeper(char * creepMe, byte loops) {
+  byte len = 0;
+  for (len; creepMe[len] != 0; len++);
+  for (byte j = 0; j < loops; j++) {
+    for (byte i = 0; i < len ; i ++) {
+      byte currCharIndex = i % len;
+      byte charPosBitValue = 16; // 1 0 0 0 0
+      for (byte i = 0; i < 5; i++){
+        Serial.println(creepMe[currCharIndex]);
+        sendCharToDigit(getCharAsByte(creepMe[currCharIndex]), charPosBitValue);
+        (currCharIndex < 5)?++currCharIndex:5;
+        charPosBitValue >>= 1;
+      }
+      delay(300);
     }
   }
-      clearSynchronous();
+}*/
+
+void writeCreeper(char * creepMe, byte loops) {
+  byte len = 0;
+  for (len; creepMe[len] != 0; len++);
+  for (byte j = 0; j < loops; j++) {
+    for (byte i = 0; i < len ; i ++) {
+      byte currCharIndex = i % len;
+      for (byte digit = 16; digit > 0; digit >>=1){
+        Serial.println(creepMe[currCharIndex]);
+        sendCharToDigit(getCharAsByte(creepMe[currCharIndex]), digit);
+        (currCharIndex < 5)?++currCharIndex:5;
+      }
+      delay(300);
+    }
+  }
 }
 
 byte getCharAsByte(char c) {
@@ -264,11 +283,13 @@ byte getCharAsByte(char c) {
     case '-': b = DASH; break;
     case '_': b = UNDERSCORE; break;
     case ':': b = COLON; break;
+    //terminator or funky OOR address
+    default: b = SPACE; break;
   }
   return b;
 }
 
-void writeCreeper(char * creepMe, int len, int loops) {
+/*void writeCreeper(char * creepMe, int len, int loops) {
   //convert msg chars  7-segment byte patterns
   for (int i = 0; i < len; i++) {
     creepMe[i % len] = getCharAsByte(creepMe[i % len]);
@@ -279,7 +300,7 @@ void writeCreeper(char * creepMe, int len, int loops) {
   }
   //delegate to byte * version of function
   writeCreeper((byte *)creepMe, len, loops);
-}
+}*/
 
 void write5(char * fiveChars) {
   int len = 5;

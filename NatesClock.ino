@@ -94,8 +94,7 @@ void setup() {
   Serial.print(__DATE__); Serial.print(" ");Serial.print(__TIME__); 
   Serial.println(" ***");
   state = TIME;
-
-  write5("8ello");
+  writeCreeper("hello!");
   playSong();
 }
 
@@ -169,16 +168,16 @@ void loop() {
 int crawlSongs() {
   //crawl song names until either a button is pushed, or we have no more songs
   for (int i = 0; i < NUM_SONGS; i++) {
-    writeCreeper((byte *)getSongName(i), getSongLength(i), 1);
+    writeCreeper((byte *)getSongName(i), 1);
   }
 }
 
 int crawlMessage() {
-    const char testMsg[] = "Testy";
+    const char testMsg[] = "Hello";
 
   //crawl song names until either a button is pushed, or we have no more songs
-  //writeCreeper((byte *)testMsg, 22, 1);
-  write5(testMsg);
+  writeCreeper((byte *)testMsg, 1);
+  //write5(testMsg);
 
 }
 
