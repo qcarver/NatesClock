@@ -154,6 +154,8 @@ void loop() {
     } else if (Button::isRPressed()) {
       (timeToSet == TIME_OF_DAY)? ++minutes % 24:  ++alarmMinutes % 24;
       restartUiTimer();
+      //change the random seed arbitrarily when we set the time
+      randomSeed(minutes);
     }
     (timeToSet == TIME_OF_DAY)? blinkTime(): blinkAlarmTime();
   }
@@ -173,12 +175,10 @@ int crawlSongs() {
 }
 
 int crawlMessage() {
-    const char testMsg[] = "Nates Clock for Arduino";
+  byte whichMsg = (byte)random(0,NUM_MESSAGES);
 
   //crawl song names until either a button is pushed, or we have no more songs
-  sideScroll((byte *)testMsg);
-  //write5(testMsg);
-
+  sideScroll((byte *)messages[whichMsg]);
 }
 
 void playSong() {

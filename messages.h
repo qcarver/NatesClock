@@ -2,7 +2,9 @@
 #undef NATSMESSAGESH
 //static messages to scroll
 
-char messages[3][52]=
+#define NUM_MESSAGES 3
+
+char messages[NUM_MESSAGES][52]=
 {
   "Nate the Great -Dad", 
   "You are the best Nate ever -Mom", 
