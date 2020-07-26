@@ -94,7 +94,7 @@ void setup() {
   Serial.print(__DATE__); Serial.print(" ");Serial.print(__TIME__); 
   Serial.println(" ***");
   state = TIME;
-  writeCreeper("hello!");
+  sideScroll("hello");
   playSong();
 }
 
@@ -168,15 +168,15 @@ void loop() {
 int crawlSongs() {
   //crawl song names until either a button is pushed, or we have no more songs
   for (int i = 0; i < NUM_SONGS; i++) {
-    writeCreeper((byte *)getSongName(i), 1);
+    sideScroll((byte *)getSongName(i));
   }
 }
 
 int crawlMessage() {
-    const char testMsg[] = "Hello";
+    const char testMsg[] = "Nates Clock for Arduino";
 
   //crawl song names until either a button is pushed, or we have no more songs
-  writeCreeper((byte *)testMsg, 1);
+  sideScroll((byte *)testMsg);
   //write5(testMsg);
 
 }

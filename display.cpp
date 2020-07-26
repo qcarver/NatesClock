@@ -32,7 +32,11 @@ void sendCharToDigit(int _char, byte digitValue);
 void sendCharToFifthDigit(int _char);
 void natesShiftOut(byte val);
 byte getCharAsByte(char c);
-void writeCreeper(char * creepMe, int len, int loops);
+void sideScroll(char * scrollMe, int len, int loops);
+
+//b/c we use bit flags as position in a byte:
+#define FAR_LEFT 16
+#define DISPLAY_LEN 5
 
 void setupDisplay() {
   //set pins to output so you can control the shift register
@@ -176,40 +180,22 @@ void natesShiftOut(byte val)
   }
 }
 
-
-/*v
-void writeCreeper(char * creepMe, byte loops) {
+void sideScroll(char * scrollMe) {
+  //determine how long the string is
   byte len = 0;
-  for (len; creepMe[len] != 0; len++);
-  for (byte j = 0; j < loops; j++) {
-    for (byte i = 0; i < len ; i ++) {
-      byte currCharIndex = i % len;
-      byte charPosBitValue = 16; // 1 0 0 0 0
-      for (byte i = 0; i < 5; i++){
-        Serial.println(creepMe[currCharIndex]);
-        sendCharToDigit(getCharAsByte(creepMe[currCharIndex]), charPosBitValue);
-        (currCharIndex < 5)?++currCharIndex:5;
-        charPosBitValue >>= 1;
-      }
-      delay(300);
-    }
-  }
-}*/
+  for (;scrollMe[len]!=0;len++);
 
-void writeCreeper(char * creepMe, byte loops) {
-  byte len = 0;
-  for (len; creepMe[len] != 0; len++);
-  for (byte j = 0; j < loops; j++) {
-    for (byte i = 0; i < len ; i ++) {
-      byte currCharIndex = i % len;
-      for (byte digit = 16; digit > 0; digit >>=1){
-        Serial.println(creepMe[currCharIndex]);
-        sendCharToDigit(getCharAsByte(creepMe[currCharIndex]), digit);
-        (currCharIndex < 5)?++currCharIndex:5;
-      }
-      delay(300);
+  //max writeout animations is same as string len (we move right one @ a time)
+  for (byte numWriteouts = 0; numWriteouts < len; numWriteouts ++){
+    for (byte displayPosition = 0; displayPosition < DISPLAY_LEN ; displayPosition ++) {
+      char currChar = (numWriteouts + displayPosition < len)?scrollMe[numWriteouts + displayPosition]:' ';
+      sendCharToDigit(getCharAsByte(currChar),FAR_LEFT >> displayPosition);
     }
+    delay(250);
   }
+
+  //clear the last character
+  write5("     ");
 }
 
 byte getCharAsByte(char c) {
@@ -288,19 +274,6 @@ byte getCharAsByte(char c) {
   }
   return b;
 }
-
-/*void writeCreeper(char * creepMe, int len, int loops) {
-  //convert msg chars  7-segment byte patterns
-  for (int i = 0; i < len; i++) {
-    creepMe[i % len] = getCharAsByte(creepMe[i % len]);
-    creepMe[(i + 1) % len] = getCharAsByte(creepMe[(i + 1) % len]);
-    creepMe[(i + 2) % len] = getCharAsByte(creepMe[(i + 2) % len]);
-    creepMe[(i + 3) % len] = getCharAsByte(creepMe[(i + 3) % len]);
-    creepMe[(i + 4) % len] = getCharAsByte(creepMe[(i + 4) % len]);
-  }
-  //delegate to byte * version of function
-  writeCreeper((byte *)creepMe, len, loops);
-}*/
 
 void write5(char * fiveChars) {
   int len = 5;
