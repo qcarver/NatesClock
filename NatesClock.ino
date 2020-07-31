@@ -37,11 +37,11 @@ TIME_TO_SET timeToSet = TIME_OF_DAY;
 enum State {
   IDLE,
   TIME,
-  CRAWL_SONGS,
+  SELECT_SONG,
   PLAY_SONG,
   SET_ALARM,//for editing ALARM on or OFF (alarmState).. NOT for setting ALARM_TIME
   BLINK_TIME, //for seeting TIME_OF_DAY or ALARM_TIME
-  CRAWL_MSG
+  SHOW_MSG
 } state = TIME;
 
 void incrementTime() {
@@ -95,7 +95,7 @@ void setup() {
   Serial.println(" ***");
   state = TIME;
   sideScroll("hello");
-  playSong();
+  //playSong();
 }
 
 void printState() {
@@ -106,11 +106,11 @@ void printState() {
 
       } break;
     case TIME: Serial.println("TIME"); break;
-    case CRAWL_SONGS: Serial.println("CRAWL_SONGS"); break;
+    case SELECT_SONG: Serial.println("SELECT_SONG"); break;
     case PLAY_SONG: Serial.println("PLAY_SONG"); break;
     case SET_ALARM: Serial.println("SET_ALARM"); break;
     case BLINK_TIME: Serial.println("BLINK_TIME"); break;
-    case CRAWL_MSG: Serial.println("CRAWL_MSG"); break;
+    case SHOW_MSG: Serial.println("SHOW_MSG"); break;
     default: Serial.print("OUT OF STATE! Value is ");Serial.println(state);break;
   }
 }
@@ -135,16 +135,15 @@ void loop() {
       restartUiTimer();
       state = BLINK_TIME;
     }
-    else if (Button::isLPressed()) state = CRAWL_SONGS;
-    else if (Button::isRPressed()) state = CRAWL_MSG;
+    else if (Button::isLPressed()) state = SELECT_SONG;
+    else if (Button::isRPressed()) state = SHOW_MSG;
   }
-  if (state == CRAWL_SONGS) {
-    crawlSongs();
-    state = PLAY_SONG;
+  if (state == SELECT_SONG) {
+    songsMenu();
+    state = TIME;
   }
   if (state == PLAY_SONG) {
     playSong();
-    //after song, go back to playing time
     state = TIME;
   }
   if (state == BLINK_TIME) {
@@ -159,22 +158,33 @@ void loop() {
     }
     (timeToSet == TIME_OF_DAY)? blinkTime(): blinkAlarmTime();
   }
-  if (state == CRAWL_MSG){
+  if (state == SHOW_MSG){
     Serial.println("crawl message");
-    crawlMessage();
+    scrollMessage();
     state = TIME;
   }
 #endif //BUTTONS_ONLY
 }
 
-int crawlSongs() {
+void songsMenu() {
+  //no double-tap (we got here by pressing a button, it may still be down)
+  delay(20);
   //crawl song names until either a button is pushed, or we have no more songs
   for (int i = 0; i < NUM_SONGS; i++) {
-    sideScroll((byte *)getSongName(i));
+    Serial.print("Scrolling song name: ");
+    Serial.println(getSongName(i));
+    if (sideScroll(getSongName(i))){
+      currSongIndex = i;
+      Serial.print("Song[");Serial.print(currSongIndex);Serial.println("] was selected");
+      playSong();
+      //instead of break{break;}
+      goto done;
+    }
   }
+  done:;
 }
 
-int crawlMessage() {
+void scrollMessage() {
   byte whichMsg = (byte)random(0,NUM_MESSAGES);
 
   //crawl song names until either a button is pushed, or we have no more songs

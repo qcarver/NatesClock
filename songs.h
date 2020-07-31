@@ -23,7 +23,7 @@ const uint8_t Songs[][SONG_LEN*2]={
 
 
 
-const char & getSongName(uint8_t index){
+char * getSongName(uint8_t index){
   return (!index)? "Blue Bird Song" : "Good Morning To You";
 }
 

@@ -1,6 +1,7 @@
 #include "display.h"
 #include "Arduino.h"
 #include "nates_symbols.h"
+#include "dbButton.h"
 
 //
 //Pin connected to input B of 74LS164
@@ -180,7 +181,8 @@ void natesShiftOut(byte val)
   }
 }
 
-void sideScroll(char * scrollMe) {
+bool sideScroll(char * scrollMe) {
+  bool selected = false;
   //determine how long the string is
   byte len = 0;
   for (;scrollMe[len]!=0;len++);
@@ -191,11 +193,16 @@ void sideScroll(char * scrollMe) {
       char currChar = (numWriteouts + displayPosition < len)?scrollMe[numWriteouts + displayPosition]:' ';
       sendCharToDigit(getCharAsByte(currChar),FAR_LEFT >> displayPosition);
     }
+    if (Button::isLPressed() || Button::isRPressed()){
+      selected = true;
+      break;
+    }
     delay(250);
   }
 
   //clear the last character
   write5("     ");
+  return selected;
 }
 
 byte getCharAsByte(char c) {
