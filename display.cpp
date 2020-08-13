@@ -22,6 +22,11 @@ int anodeE_5th = 10;
 int anodeF_5th = 2;
 int anodeG_5th = 9;
 
+//leds above the two buttons..logic is inverted
+int leftLed = 17;
+int midLed = 16;
+int rightLed = 15;
+
 int fifthDigitAnodes[7] = {anodeA_5th, anodeB_5th, anodeC_5th = 12, anodeD_5th, anodeE_5th = 10, anodeF_5th = 2, anodeG_5th = 9};
 
 byte oldChar[5] = {SPACE, SPACE, SPACE, SPACE, SPACE};
@@ -59,19 +64,25 @@ void setupDisplay() {
   pinMode(15, OUTPUT);
   clearFifth();
   clearSynchronous();
-  digitalWrite(15, LOW);
-  digitalWrite(16, LOW);
-  digitalWrite(17, LOW);
-  digitalWrite(15, HIGH);
-  delay(500);
-  digitalWrite(16, HIGH);
-  delay(500);
-  digitalWrite(17, HIGH);
-  delay(500);
-  digitalWrite(15, LOW);
-  digitalWrite(16, LOW);
-  digitalWrite(17, LOW);
-  delay(500);
+
+  setPanelLeds(NONE);
+  setPanelLeds(LEFT);
+  delay(250);
+  setPanelLeds(CENTER);
+  delay(250);
+  setPanelLeds(RIGHT);
+  delay(250);
+  setPanelLeds(CENTER);
+  delay(250);
+  setPanelLeds(LEFT);
+  delay(250);
+  setPanelLeds(GREEN_ONES);
+}
+
+void setPanelLeds(LED_PATTERN ledPattern){
+  digitalWrite(leftLed, (ledPattern & LEFT)? LOW:HIGH);
+  digitalWrite(midLed, (ledPattern & MIDDLE)? LOW:HIGH);
+  digitalWrite(rightLed, (ledPattern & RED)? LOW:HIGH);
 }
 
 //in Nates counting box we have related 4bit coutner ICs but the 163A's used need

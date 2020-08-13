@@ -71,8 +71,8 @@ void incrementTime() {
       }
     }
   }
-  //if we have reached the set alarm time, play the last song that was selected
-  if ((hours == alarmHours) && (minutes == alarmMinutes) && (seconds == 0) && (state != PLAY_SONG)) {
+  //if we have reached the set alarm time, and the alarm is switched on, play the last song that was selected
+  if ((hours == alarmHours) && (minutes == alarmMinutes) && (seconds == 0) && (alarmState)) {
     state = PLAY_SONG;
   }
 }
