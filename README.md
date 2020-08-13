@@ -4,3 +4,6 @@ This is a simple program which works with an Arduino burned Atmel and a hand ful
 
 A video of the "computer" before it went in the case is here: https://www.youtube.com/watch?v=rpshfs3g9n4
 
+A hand drawn schematic of Nate's Clock:
+![alt text](File_000.jpeg)
+
