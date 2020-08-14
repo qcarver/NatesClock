@@ -210,7 +210,6 @@ bool sideScroll(char * scrollMe) {
     }
     delay(250);
   }
-
   //clear the last character
   write5("     ");
   return selected;

@@ -125,10 +125,11 @@ void loop() {
     //b/c deciseconds interrupt periodicablly toggles TIME to IDLE
     state = IDLE;
     writeTime();
+    setPanelLeds(alarmSet? ALARM_ON:ALARM_OFF);
     if (Button::isLHeld()) {
-      timeToSet = ALARM_TIME;
+      write5("Alarm");
       restartUiTimer();
-      state = BLINK_TIME;
+      state = SET_ALARM;
     }
     else if (Button::isRHeld()) {
       timeToSet = TIME_OF_DAY;
@@ -137,6 +138,26 @@ void loop() {
     }
     else if (Button::isLPressed()) state = SELECT_SONG;
     else if (Button::isRPressed()) state = SHOW_MSG;
+  }
+  if (state == SET_ALARM){
+      //give user a chance to get finger off button
+      delay(20);
+      //blink on or off indicators to hint to make a choice
+      setPanelLeds((deciseconds%6 < 3)? LEFT:RIGHT);
+      if (uiTimer > 15){
+        //user has toggled the alarm on
+        if (Button::isRPressed()){
+          alarmSet = true;
+          timeToSet = ALARM_TIME;
+          restartUiTimer();
+          state = BLINK_TIME;
+        }
+        if (Button::isLPressed()){
+          alarmSet = false;
+          restartUiTimer();
+        }
+      }
+      //we also exit this state if the UiTimer times out
   }
   if (state == SELECT_SONG) {
     songsMenu();
