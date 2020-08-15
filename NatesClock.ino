@@ -18,7 +18,6 @@ uint16_t minutes = 00;
 uint16_t hours = 12;
 uint16_t alarmMinutes = 00;
 uint16_t alarmHours = 11;
-boolean alarmState = false;
 enum TIME_TO_SET {TIME_OF_DAY, ALARM_TIME};
 
 //next alarm song, also last song selected
@@ -72,7 +71,7 @@ void incrementTime() {
     }
   }
   //if we have reached the set alarm time, and the alarm is switched on, play the last song that was selected
-  if ((hours == alarmHours) && (minutes == alarmMinutes) && (seconds == 0) && (alarmState)) {
+  if ((hours == alarmHours) && (minutes == alarmMinutes) && (seconds == 0) && (alarmSet)) {
     state = PLAY_SONG;
   }
 }
